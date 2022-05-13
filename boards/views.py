@@ -3,6 +3,11 @@ from django.shortcuts import render
 
 from django.http import HttpResponse
 
+from .models import Board
 
 def home(request):
-    return HttpResponse("Hello, World!")
+    boards = Board.objects.all()
+    context = {
+        'boards' : boards
+    }
+    return render(request, 'home.html', context)
