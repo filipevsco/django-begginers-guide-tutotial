@@ -35,11 +35,16 @@ class PostListView(ListView):
     model = Post
     context_object_name = 'posts'
     template_name = 'topic_posts.html'
-    paginate_by = 2
+    paginate_by = 20
 
     def get_context_data(self, **kwargs):
-        self.topic.views += 1
-        self.topic.save()
+
+        session_key = 'viewed_topic_{}'.format(self.topic.pk)  # <-- here
+        if not self.request.session.get(session_key, False):
+            self.topic.views += 1
+            self.topic.save()
+            self.request.session[session_key] = True           # <-- until here
+
         kwargs['topic'] = self.topic
         return super().get_context_data(**kwargs)
 
@@ -64,7 +69,7 @@ def new_topic(request, pk):
                 topic=topic,
                 created_by=request.user
             )
-            return redirect('board_topics', pk=pk, topic_pk=topic.pk)  # TODO: redirect to the created topic page
+            return redirect('topic_posts', pk=pk, topic_pk=topic.pk)
     else:
         form = NewTopicForm()
     return render(request, 'new_topic.html', {'board': board, 'form': form})
@@ -80,7 +85,18 @@ def reply_topic(request, pk, topic_pk):
             post.topic = topic
             post.created_by = request.user
             post.save()
-            return redirect('topic_posts', pk=pk, topic_pk=topic_pk)
+
+            topic.last_updated = timezone.now()
+            topic.save()
+
+            topic_url = reverse('topic_posts', kwargs={'pk': pk, 'topic_pk': topic_pk})
+            topic_post_url = '{url}?page={page}#{id}'.format(
+                url=topic_url,
+                id=post.pk,
+                page=topic.get_page_count()
+            )
+
+            return redirect(topic_post_url)
     else:
         form = PostForm()
     return render(request, 'reply_topic.html', {'topic': topic, 'form': form})
