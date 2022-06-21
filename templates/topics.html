@@ -15,7 +15,26 @@
   </div>
 
   <table class="table mb-4">
-    <!-- table content suppressed -->
+    <thead class="thead-inverse">
+      <tr>
+        <th>Topic</th>
+        <th>Starter</th>
+        <th>Replies</th>
+        <th>Views</th>
+        <th>Last Update</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for topic in topics %}
+        <tr>
+          <td><a href="{% url 'topic_posts' board.pk topic.pk %}">{{ topic.subject }}</a></td>
+          <td>{{ topic.starter.username }}</td>
+          <td>{{ topic.replies }}</td>
+          <td>{{ topic.views }}</td>
+          <td>{{ topic.last_updated }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
   </table>
 
   {% if is_paginated %}
